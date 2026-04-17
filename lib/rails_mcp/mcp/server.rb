@@ -4,7 +4,7 @@ require "rack"
 require_relative "../version"
 require_relative "../executor"
 
-module RackMcp
+module RailsMcp
   module MCP
     # Minimal MCP-over-HTTP (JSON-RPC) server.
     # Single-session, single-process demo: fine for local/dev usage.
@@ -48,7 +48,7 @@ module RackMcp
       private
 
       def authorized?(req)
-        expected_token = ENV["RACK_MCP_TOKEN"]
+        expected_token = ENV["RAILS_MCP_TOKEN"]
         
         # If no token is configured in ENV, consider it unauthorized
         return false if expected_token.nil? || expected_token.empty?
@@ -71,7 +71,7 @@ module RackMcp
           when "initialize"
             {
               "protocolVersion" => "2025-06-18",
-              "serverInfo"      => { "name" => "rack_mcp", "version" => RackMcp::VERSION },
+              "serverInfo"      => { "name" => "rails_mcp", "version" => RailsMcp::VERSION },
               "capabilities"    => { "tools" => {} }
             }
 
@@ -83,7 +83,7 @@ module RackMcp
             args = payload.dig("params", "arguments") || {}
 
             if name == "evaluate_ruby_code"
-              out = RackMcp::Executor.eval(args["code"].to_s)
+              out = RailsMcp::Executor.eval(args["code"].to_s)
               { "content" => [{ "type" => "text", "text" => out }] }
             else
               raise "Unknown tool: #{name}"

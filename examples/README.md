@@ -1,4 +1,4 @@
-# RackMcp tests
+# RailsMcp tests
 
 Quick end-to-end verification test.
 
@@ -61,7 +61,7 @@ curl -X POST http://localhost:9292/mcp/rpc \
 
 The MCP server supports direct JSON-RPC requests and responses:
 
-1. Start your RackMcp server:
+1. Start your RailsMcp server:
 ```bash
 bundle exec rackup -p 9292
 ```

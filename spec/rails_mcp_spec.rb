@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require "spec_helper"
-require "rack_mcp/mcp/server"
+require "rails_mcp/mcp/server"
 require "rack/test"
 require "json"
 
-RSpec.describe RackMcp::MCP::Server do
+RSpec.describe RailsMcp::MCP::Server do
   include Rack::Test::Methods
 
   let(:app) { described_class.new }
@@ -35,7 +35,7 @@ RSpec.describe RackMcp::MCP::Server do
         expect(response["id"]).to eq(1)
         expect(response["result"]).to be_a(Hash)
         expect(response["result"]["protocolVersion"]).to eq("2025-06-18")
-        expect(response["result"]["serverInfo"]["name"]).to eq("rack_mcp")
+        expect(response["result"]["serverInfo"]["name"]).to eq("rails_mcp")
       end
     end
 

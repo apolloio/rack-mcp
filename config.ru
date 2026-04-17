@@ -1,12 +1,12 @@
-require_relative "lib/rack_mcp"
-require_relative "lib/rack_mcp/mcp/server"
+require_relative "lib/rails_mcp"
+require_relative "lib/rails_mcp/mcp/server"
 
 # Example config.ru for running the MCP server
 # Run with: bundle exec rackup -p 9292
 # MCP endpoint: POST /mcp/rpc
 
 map "/mcp" do
-  run RackMcp::MCP::Server.new
+  run RailsMcp::MCP::Server.new
 end
 
 # Root path with usage info
@@ -17,9 +17,9 @@ map "/" do
       {"content-type" => "text/html"},
       [<<~HTML
         <html>
-        <head><title>RackMcp MCP Server</title></head>
+        <head><title>RailsMcp MCP Server</title></head>
         <body>
-          <h1>RackMcp - Model Context Protocol Server</h1>
+          <h1>RailsMcp - Model Context Protocol Server</h1>
           <p>This server provides Ruby code execution capabilities via the Model Context Protocol (MCP).</p>
           
           <h2>MCP Endpoint</h2>

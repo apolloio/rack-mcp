@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 Gem::Specification.new do |s|
-  s.name        = "rack_mcp"
+  s.name        = "rails_mcp"
   s.version     = "0.1.0"
   s.summary     = "Model Context Protocol (MCP) server for Ruby code execution"
   s.description = "A Rack-based MCP server that enables AI assistants to execute Ruby code via the Model Context Protocol."
   s.license     = "MIT"
   s.authors     = ["Raja Jamwal"]
   s.email       = ["linux.experi@gmail.com"]
-  s.homepage    = "https://github.com/raja-jamwal/rack-mcp"
+  s.homepage    = "https://github.com/raja-jamwal/rails-mcp"
 
   s.files = Dir["lib/**/*", "LICENSE", "README.md"]
   s.require_paths = ["lib"]
