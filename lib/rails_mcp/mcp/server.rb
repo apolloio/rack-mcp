@@ -9,7 +9,11 @@ module RailsMcp
     # Minimal MCP-over-HTTP (JSON-RPC) server.
     # Single-session, single-process demo: fine for local/dev usage.
     class Server
-      def initialize
+      VERIFICATION_HEADER = "HTTP_X_RAILS_MCP_TOKEN"
+      MIN_TOKEN_LENGTH = 8
+
+      def initialize(use_client_verification: false)
+        @use_client_verification = use_client_verification
         @tools = [
           {
             "name" => "evaluate_ruby_code",
@@ -31,6 +35,10 @@ module RailsMcp
       def call(env)
         req = Rack::Request.new(env)
 
+        if @use_client_verification && !verified?(env)
+          return [401, {"content-type" => "application/json"}, [JSON.generate({"error" => "Unauthorized"})]]
+        end
+
         case [req.request_method, req.path_info]
         when ["POST", "/rpc"] then handle_rpc(req)
         else
@@ -39,6 +47,17 @@ module RailsMcp
       end
 
       private
+
+      # Checks a custom header against ENV["RAILS_MCP_TOKEN"]. Deliberately not
+      # `Authorization: Bearer` — that triggers DCR/well-known discovery in
+      # MCP clients and would collide with any product-facing MCP the host app
+      # already exposes. The 401 response intentionally omits WWW-Authenticate
+      # so OAuth-aware clients don't try to negotiate a token.
+      def verified?(env)
+        expected = ENV["RAILS_MCP_TOKEN"]
+        return false if expected.nil? || expected.length < MIN_TOKEN_LENGTH
+        env[VERIFICATION_HEADER] == expected
+      end
 
       def handle_rpc(req)
         payload = JSON.parse(req.body.read)

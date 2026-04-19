@@ -135,6 +135,85 @@ RSpec.describe RailsMcp::MCP::Server do
     end
   end
 
+  describe "client verification" do
+    let(:valid_token) { "supersecrettoken" }
+    let(:rpc_payload) do
+      JSON.generate({"jsonrpc" => "2.0", "id" => 1, "method" => "tools/list", "params" => {}})
+    end
+
+    around do |example|
+      original = ENV["RAILS_MCP_TOKEN"]
+      example.run
+    ensure
+      ENV["RAILS_MCP_TOKEN"] = original
+    end
+
+    context "when disabled (default)" do
+      let(:app) { described_class.new }
+
+      it "accepts requests without the verification header" do
+        ENV["RAILS_MCP_TOKEN"] = valid_token
+        post "/rpc", rpc_payload, {"CONTENT_TYPE" => "application/json"}
+        expect(last_response.status).to eq(200)
+      end
+    end
+
+    context "when enabled" do
+      let(:app) { described_class.new(use_client_verification: true) }
+
+      it "returns 401 when ENV token is unset" do
+        ENV["RAILS_MCP_TOKEN"] = nil
+        post "/rpc", rpc_payload, {
+          "CONTENT_TYPE" => "application/json",
+          "HTTP_X_RAILS_MCP_TOKEN" => valid_token
+        }
+        expect(last_response.status).to eq(401)
+      end
+
+      it "returns 401 when ENV token is shorter than 8 chars" do
+        ENV["RAILS_MCP_TOKEN"] = "short"
+        post "/rpc", rpc_payload, {
+          "CONTENT_TYPE" => "application/json",
+          "HTTP_X_RAILS_MCP_TOKEN" => "short"
+        }
+        expect(last_response.status).to eq(401)
+      end
+
+      it "returns 401 when the header is missing" do
+        ENV["RAILS_MCP_TOKEN"] = valid_token
+        post "/rpc", rpc_payload, {"CONTENT_TYPE" => "application/json"}
+        expect(last_response.status).to eq(401)
+      end
+
+      it "returns 401 when the header value does not match" do
+        ENV["RAILS_MCP_TOKEN"] = valid_token
+        post "/rpc", rpc_payload, {
+          "CONTENT_TYPE" => "application/json",
+          "HTTP_X_RAILS_MCP_TOKEN" => "wrong-token"
+        }
+        expect(last_response.status).to eq(401)
+      end
+
+      it "does not emit a WWW-Authenticate header on 401" do
+        ENV["RAILS_MCP_TOKEN"] = valid_token
+        post "/rpc", rpc_payload, {"CONTENT_TYPE" => "application/json"}
+        expect(last_response.status).to eq(401)
+        expect(last_response.headers.keys.map(&:downcase)).not_to include("www-authenticate")
+      end
+
+      it "accepts the request when the header matches" do
+        ENV["RAILS_MCP_TOKEN"] = valid_token
+        post "/rpc", rpc_payload, {
+          "CONTENT_TYPE" => "application/json",
+          "HTTP_X_RAILS_MCP_TOKEN" => valid_token
+        }
+        expect(last_response.status).to eq(200)
+        response = JSON.parse(last_response.body)
+        expect(response["result"]["tools"]).to be_an(Array)
+      end
+    end
+  end
+
   describe "end-to-end MCP flow" do
     it "completes initialize -> tools/list -> tools/call sequence" do
       # Step 1: Initialize

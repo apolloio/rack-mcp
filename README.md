@@ -143,6 +143,45 @@ curl -X POST "http://localhost:3001/mcp/rpc" \
   }'
 ```
 
+## Optional: Client Verification
+
+If you want a second layer of defense beyond environment-scoped mounting and network gating, enable client verification when constructing the server. When enabled, every request must carry an `X-Rails-Mcp-Token` header whose value matches `ENV["RAILS_MCP_TOKEN"]` (minimum 8 characters); otherwise the server responds `401 Unauthorized`.
+
+This deliberately uses a custom header (not `Authorization: Bearer`) and returns no `WWW-Authenticate` so it stays off the standard MCP/OAuth code path — important when the host Rails app already exposes a separate, product-facing MCP server with DCR / well-known discovery.
+
+```ruby
+mount RailsMcp::MCP::Server.new(use_client_verification: true) => "/mcp"
+```
+
+Set the token in the host environment:
+
+```bash
+export RAILS_MCP_TOKEN="<at-least-8-char-secret>"
+```
+
+Claude Code:
+
+```bash
+claude mcp add rails-mcp --transport http \
+  --header "X-Rails-Mcp-Token: $RAILS_MCP_TOKEN" \
+  http://localhost:3001/mcp/rpc
+```
+
+Cursor (`.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "rails-mcp": {
+      "url": "http://localhost:3001/mcp/rpc",
+      "headers": {
+        "X-Rails-Mcp-Token": "<at-least-8-char-secret>"
+      }
+    }
+  }
+}
+```
+
 ## Testing
 
 Run the test suite:
